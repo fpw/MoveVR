@@ -72,10 +72,22 @@ PLUGIN_API int XPluginEnable(void) {
 }
 
 PLUGIN_API void XPluginReceiveMessage(XPLMPluginID src, int msg, void *inParam) {
-    if (msg == XPLM_MSG_PLANE_LOADED && inParam == 0) {
-        if (moveVR) {
+    if (!moveVR) {
+        return;
+    }
+
+    switch (msg) {
+    case XPLM_MSG_PLANE_LOADED:
+        if (inParam == 0) {
             moveVR->onPlaneReload();
         }
+        break;
+    case XPLM_MSG_ENTERED_VR:
+        moveVR->onVRStateChanged(true);
+        break;
+    case XPLM_MSG_EXITING_VR:
+        moveVR->onVRStateChanged(false);
+        break;
     }
 }
 

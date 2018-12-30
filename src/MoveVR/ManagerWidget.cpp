@@ -29,7 +29,7 @@ ManagerWidget::ManagerWidget(std::shared_ptr<WindowManager> mgr, int left, int t
 }
 
 void ManagerWidget::buildInterface() {
-    if (ImGui::CollapsingHeader("Usage & About")) {
+    if (ImGui::TreeNode("Usage & About")) {
         const char *text =
                 "MoveVR " MOVEVR_VERSION_STR ", copyright 2018 by Folke Will <folko@solhost.org>\n"
                 "Uses the X-Plane imgui integration library, copyright 2018 by Christopher Collins\n"
@@ -40,11 +40,77 @@ void ManagerWidget::buildInterface() {
                 "Only enable mouse dragging if you are using an application that needs dragging or panning.\n"
                 "";
         ImGui::Text(text);
+
+        ImGui::TreePop();
     }
 
+    if (ImGui::TreeNode("Plugin Windows")) {
+        buildXPlaneWindows();
+        ImGui::TreePop();
+    }
+
+    if (ImGui::TreeNode("System Windows")) {
+        buildSystemWindows();
+        ImGui::TreePop();
+    }
+
+    ImGui::Separator();
+    ImGui::TextUnformatted("Enable the following option if the aircraft has touch displays that do react to VR controllers.");
+    bool triggerEnabled = manager->isPanelCaptureEnabled();
+    if (ImGui::Checkbox("Forward VR triggers to panels", &triggerEnabled)) {
+        manager->setEnablePanelCapture(triggerEnabled);
+    }
+}
+
+void ManagerWidget::buildXPlaneWindows() {
+    auto pluginWindows = groupWindowsByPlugin();
+
+    for (auto it = pluginWindows.begin(); it != pluginWindows.end(); ++it) {
+        auto plugin = it->first;
+        char name[512];
+        XPLMGetPluginInfo(plugin, name, nullptr, nullptr, nullptr);
+
+        ImGui::PushID(plugin);
+        if (ImGui::TreeNode(name)) {
+            auto &windows = it->second;
+
+            for (auto wnd: windows) {
+                int top, left, bottom, right;
+                XPLMGetWindowGeometry(wnd, &left, &top, &right, &bottom);
+
+                char buf[128];
+                sprintf(buf, "Window of size %dx%d###%p", right - left, top - bottom, wnd);
+
+                if (ImGui::TreeNode(buf)) {
+                    buildXPlaneWindow(wnd);
+                    ImGui::TreePop();
+                }
+            }
+
+            ImGui::TreePop();
+        }
+        ImGui::PopID();
+    }
+}
+
+void ManagerWidget::buildXPlaneWindow(XPLMWindowID wnd) {
+    bool isInVR = XPLMWindowIsInVR(wnd);
+
+    if (!isInVR) {
+        if (ImGui::Button("Move to VR")) {
+            XPLMSetWindowPositioningMode(wnd, xplm_WindowVR, -1);
+        }
+    } else {
+        if (ImGui::Button("Move to 2D")) {
+            XPLMSetWindowPositioningMode(wnd, xplm_WindowPositionFree, -1);
+        }
+    }
+}
+
+void ManagerWidget::buildSystemWindows() {
     manager->forEachWindow([this] (std::shared_ptr<Window> wnd) {
         ImGui::PushID(wnd.get());
-        if (ImGui::CollapsingHeader(wnd->getTitle().c_str())) {
+        if (ImGui::TreeNode(wnd->getTitle().c_str())) {
             auto &config = windowConfig[wnd];
             auto moved = manager->findMovedWindow(wnd);
 
@@ -104,7 +170,27 @@ void ManagerWidget::buildInterface() {
             } else {
                 ImGui::Text("Window is in VR");
             }
+
+            ImGui::TreePop();
         }
         ImGui::PopID();
     });
+}
+
+std::map<XPLMPluginID, std::vector<XPLMWindowID>> ManagerWidget::groupWindowsByPlugin() {
+    std::map<XPLMPluginID, std::vector<XPLMWindowID>> res;
+
+    auto windowList = manager->getXPlaneWindows();
+    auto windows = windowList->findWindows();
+
+    for (auto wnd: windows) {
+        if (!XPLMGetWindowIsVisible(wnd)) {
+            continue;
+        }
+
+        auto plugin = windowList->getPluginFromWindow(wnd);
+        res[plugin].push_back(wnd);
+    }
+
+    return res;
 }

@@ -20,16 +20,3 @@
 #define MOVEVR_VERSION_MINOR @MoveVR_VERSION_MINOR@
 #define MOVEVR_VERSION_PATCH @MoveVR_VERSION_PATCH@
 #define MOVEVR_VERSION_STR "@MoveVR_VERSION_MAJOR@.@MoveVR_VERSION_MINOR@.@MoveVR_VERSION_PATCH@"
-
-#if defined _WIN32
-#   define IBM 1
-#elif defined __linux
-#   define LIN 1
-#elif defined __APPLE__
-#   define APL 1
-#endif
-
-#define XPLM301
-#define XPLM300
-#define XPLM210
-#define XPLM200

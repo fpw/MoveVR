@@ -21,17 +21,28 @@
 #include <memory>
 #include <vector>
 #include <map>
+#include <set>
 #include <functional>
 #include "src/windows/Window.h"
+#include "src/xplane/XPlaneWindowList.h"
+#include "src/xplane/VRTriggerCapturer.h"
 #include "MovedWindow.h"
 
 class WindowManager {
 public:
     using WindowIterator = std::function<void(std::shared_ptr<Window>)>;
 
+    WindowManager();
+
+    void onVRStateChanged(bool inVr);
+    void setEnablePanelCapture(bool enable);
+    bool isPanelCaptureEnabled() const;
+
     void update();
     void checkForClose();
     void forEachWindow(WindowIterator f);
+
+    std::shared_ptr<XPlaneWindowList> getXPlaneWindows();
 
     std::shared_ptr<MovedWindow> moveToVR(std::shared_ptr<Window> window);
     std::shared_ptr<MovedWindow> findMovedWindow(std::shared_ptr<Window> window);
@@ -39,7 +50,11 @@ public:
     void closeVRWindows();
 
 private:
+    bool isInVR = false;
+    bool triggerEnabled = false;
+    VRTriggerCapturer vrCapturer;
     std::vector<std::shared_ptr<Window>> systemWindows;
+    std::shared_ptr<XPlaneWindowList> xplaneWindows;
     std::map<std::shared_ptr<Window>, std::shared_ptr<MovedWindow>> movedWindows;
 };
 

@@ -16,6 +16,42 @@
  *   along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 #include "WindowManager.h"
+#include "src/Logger.h"
+
+WindowManager::WindowManager() {
+    xplaneWindows = std::make_shared<XPlaneWindowList>();
+
+    vrCapturer.setTriggerCallback([this] (XPLMMouseStatus status, int px, int py) {
+        if (px > 0 && py > 0 && status != xplm_MouseDrag) {
+            // only forward panel clicks to not mess up plugin windows
+            for (auto wnd: xplaneWindows->findWindows()) {
+                // the window expects window coordinates, we don't have any.
+                xplaneWindows->sendLeftClick(wnd, status, -1, -1);
+            }
+        }
+    });
+}
+
+void WindowManager::setEnablePanelCapture(bool enable) {
+    triggerEnabled = enable;
+    if (isInVR) {
+        vrCapturer.setEnabled(triggerEnabled);
+    }
+}
+
+bool WindowManager::isPanelCaptureEnabled() const {
+    return triggerEnabled;
+}
+
+void WindowManager::onVRStateChanged(bool inVr) {
+    isInVR = inVr;
+    if (isInVR) {
+        vrCapturer.setEnabled(triggerEnabled);
+    } else {
+        closeVRWindows();
+        vrCapturer.setEnabled(false);
+    }
+}
 
 void WindowManager::update() {
     auto currentWindows = findWindows();
@@ -57,6 +93,10 @@ void WindowManager::forEachWindow(WindowIterator f) {
     for (auto &win: systemWindows) {
         f(win);
     }
+}
+
+std::shared_ptr<XPlaneWindowList> WindowManager::getXPlaneWindows() {
+    return xplaneWindows;
 }
 
 std::shared_ptr<MovedWindow> WindowManager::moveToVR(std::shared_ptr<Window> window) {

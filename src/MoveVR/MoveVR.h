@@ -30,6 +30,7 @@ class MoveVR {
 public:
     MoveVR();
     void start();
+    void onVRStateChanged(bool inVr);
     void onPlaneReload();
     void stop();
 private:

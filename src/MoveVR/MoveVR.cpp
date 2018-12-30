@@ -25,19 +25,26 @@ MoveVR::MoveVR():
 }
 
 void MoveVR::start() {
-    XPLMEnableFeature("XPLM_USE_NATIVE_WIDGET_WINDOWS", 1);
-
     createMenu("MoveVR");
     command = createCommand();
 
     flightLoopId = createFlightLoop();
     XPLMScheduleFlightLoop(flightLoopId, 0.25, true);
+
+    auto vrRef = XPLMFindDataRef("sim/graphics/VR/enabled");
+    bool inVr = XPLMGetDatai(vrRef);
+    onVRStateChanged(inVr);
+}
+
+void MoveVR::onVRStateChanged(bool inVr) {
+    windowManager->onVRStateChanged(inVr);
 }
 
 void MoveVR::onPlaneReload() {
     if (managerWidget) {
         managerWidget->SetVisible(false);
     }
+    windowManager->setEnablePanelCapture(false);
     windowManager->closeVRWindows();
 }
 

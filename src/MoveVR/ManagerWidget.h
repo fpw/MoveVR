@@ -19,6 +19,7 @@
 #define SRC_MOVEVR_MANAGERWIDGET_H_
 
 #include <functional>
+#include <vector>
 #include <map>
 #include <memory>
 #include "WindowManager.h"
@@ -39,6 +40,13 @@ protected:
 private:
     std::shared_ptr<WindowManager> manager;
     std::map<std::shared_ptr<Window>, WindowConfig> windowConfig;
+
+    void buildXPlaneWindows();
+    void buildXPlaneWindow(XPLMWindowID wnd);
+
+    void buildSystemWindows();
+
+    std::map<XPLMPluginID, std::vector<XPLMWindowID>> groupWindowsByPlugin();
 };
 
 #endif /* SRC_MOVEVR_MANAGERWIDGET_H_ */
