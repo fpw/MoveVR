@@ -35,8 +35,9 @@ public:
     WindowManager();
 
     void onVRStateChanged(bool inVr);
-    void setEnablePanelCapture(bool enable);
-    bool isPanelCaptureEnabled() const;
+    void addTriggerReceiver(XPLMWindowID wnd);
+    void removeTriggerReceiver(XPLMWindowID wnd);
+    bool isTriggerReceiver(XPLMWindowID wnd);
 
     void update();
     void checkForClose();
@@ -51,7 +52,7 @@ public:
 
 private:
     bool isInVR = false;
-    bool triggerEnabled = false;
+    std::set<XPLMWindowID> triggerReceivers;
     VRTriggerCapturer vrCapturer;
     std::vector<std::shared_ptr<Window>> systemWindows;
     std::shared_ptr<XPlaneWindowList> xplaneWindows;

@@ -20,6 +20,7 @@
 
 #include <XPLM/XPLMDataAccess.h>
 #include <XPLM/XPLMDisplay.h>
+#include <XPLM/XPLMProcessing.h>
 #include <vector>
 #include <functional>
 
@@ -27,13 +28,15 @@ class VRTriggerCapturer {
 public:
     // the coordinates are panel pixel coordinates - clicks outside of panels will be reported, but there is
     // no way to get the coordinates in that case. They are set to -1.
-    using TriggerCallback = std::function<void(XPLMMouseStatus, int, int)>;
+    using TriggerCallback = std::function<void(XPLMMouseStatus, float, float)>;
 
     VRTriggerCapturer();
     void setEnabled(bool enable);
     void setTriggerCallback(TriggerCallback cb);
     ~VRTriggerCapturer();
 private:
+    XPLMFlightLoopID flightLoop{};
+    bool isEnabled = false;
     TriggerCallback triggerCallback{};
     XPLMDataRef refXpix{}, refYpix{}, refButtonValues{};
     XPLMWindowID captureWindow{};
@@ -41,7 +44,6 @@ private:
     bool triggerDown = false;
 
     bool findVRTriggers();
-    static int onDraw3D(XPLMDrawingPhase phase, int isBefore, void *ref);
     void checkVRClicks();
     void onTrigger(XPLMMouseStatus status);
 };

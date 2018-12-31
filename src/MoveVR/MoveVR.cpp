@@ -44,7 +44,6 @@ void MoveVR::onPlaneReload() {
     if (managerWidget) {
         managerWidget->SetVisible(false);
     }
-    windowManager->setEnablePanelCapture(false);
     windowManager->closeVRWindows();
 }
 

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.9)
-project(MoveVR VERSION 0.2.0 DESCRIPTION "MoveVR X-Plane plugin")
+project(MoveVR VERSION 0.2.1 DESCRIPTION "MoveVR X-Plane plugin")
 
 configure_file(
   "${PROJECT_SOURCE_DIR}/config.h.in"

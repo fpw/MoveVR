@@ -23,6 +23,16 @@ VRTriggerCapturer::VRTriggerCapturer() {
     refXpix = XPLMFindDataRef("sim/graphics/view/click_3d_x_pixels");
     refYpix = XPLMFindDataRef("sim/graphics/view/click_3d_y_pixels");
     refButtonValues = XPLMFindDataRef("sim/joystick/joystick_button_values");
+
+    XPLMCreateFlightLoop_t params{};
+    params.structSize = sizeof(params);
+    params.callbackFunc = [] (float elapsedSinceCall, float elapsedSinceLoop, int refCount, void *ref) -> float {
+        ((VRTriggerCapturer *) (ref))->checkVRClicks();
+        return -1;
+    };
+    params.phase = 0; // ignored
+    params.refcon = this;
+    flightLoop = XPLMCreateFlightLoop(&params);
 }
 
 void VRTriggerCapturer::setTriggerCallback(TriggerCallback cb) {
@@ -30,16 +40,22 @@ void VRTriggerCapturer::setTriggerCallback(TriggerCallback cb) {
 }
 
 void VRTriggerCapturer::setEnabled(bool enable) {
-    if (!enable) {
+    if (enable == isEnabled) {
+        return;
+    }
+
+    isEnabled = enable;
+
+    if (!isEnabled) {
         logger::verbose("Not capturing VR clicks");
-        XPLMUnregisterDrawCallback(onDraw3D, xplm_Phase_Gauges, false, this);
+        XPLMScheduleFlightLoop(flightLoop, 0, false);
         return;
     }
 
     bool foundController = findVRTriggers();
     if (foundController) {
         logger::verbose("Now capturing VR clicks");
-        XPLMRegisterDrawCallback(onDraw3D, xplm_Phase_Gauges, false, this);
+        XPLMScheduleFlightLoop(flightLoop, -1, false);
     } else {
         logger::verbose("Not capturing VR clicks - no controllers detected");
     }
@@ -69,11 +85,6 @@ bool VRTriggerCapturer::findVRTriggers() {
     }
 
     return !vrTriggerIndices.empty();
-}
-
-int VRTriggerCapturer::onDraw3D(XPLMDrawingPhase phase, int isBefore, void *ref) {
-    ((VRTriggerCapturer *) (ref))->checkVRClicks();
-    return 1;
 }
 
 void VRTriggerCapturer::checkVRClicks() {
@@ -117,5 +128,5 @@ void VRTriggerCapturer::onTrigger(XPLMMouseStatus status) {
 }
 
 VRTriggerCapturer::~VRTriggerCapturer() {
-    XPLMUnregisterDrawCallback(onDraw3D, xplm_Phase_Gauges, false, this);
+    XPLMDestroyFlightLoop(flightLoop);
 }

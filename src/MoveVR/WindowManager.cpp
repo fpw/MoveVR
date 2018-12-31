@@ -15,38 +15,52 @@
  *   You should have received a copy of the GNU Affero General Public License
  *   along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
+#include <algorithm>
 #include "WindowManager.h"
 #include "src/Logger.h"
 
 WindowManager::WindowManager() {
     xplaneWindows = std::make_shared<XPlaneWindowList>();
 
-    vrCapturer.setTriggerCallback([this] (XPLMMouseStatus status, int px, int py) {
-        if (px > 0 && py > 0 && status != xplm_MouseDrag) {
+    vrCapturer.setTriggerCallback([this] (XPLMMouseStatus status, float px, float py) {
+        if (px > 0 && py > 0) {
             // only forward panel clicks to not mess up plugin windows
-            for (auto wnd: xplaneWindows->findWindows()) {
-                // the window expects window coordinates, we don't have any.
-                xplaneWindows->sendLeftClick(wnd, status, -1, -1);
+            auto allWindows = xplaneWindows->findWindows();
+            for (auto wnd: triggerReceivers) {
+                if (std::find(allWindows.begin(), allWindows.end(), wnd) != allWindows.end()) {
+                    xplaneWindows->sendLeftClick(wnd, status, -1, -1);
+                }
             }
         }
     });
 }
 
-void WindowManager::setEnablePanelCapture(bool enable) {
-    triggerEnabled = enable;
+void WindowManager::addTriggerReceiver(XPLMWindowID wnd) {
+    triggerReceivers.insert(wnd);
     if (isInVR) {
-        vrCapturer.setEnabled(triggerEnabled);
+        vrCapturer.setEnabled(true);
     }
 }
 
-bool WindowManager::isPanelCaptureEnabled() const {
-    return triggerEnabled;
+void WindowManager::removeTriggerReceiver(XPLMWindowID wnd) {
+    triggerReceivers.erase(wnd);
+    if (isInVR) {
+        if (triggerReceivers.empty()) {
+            vrCapturer.setEnabled(false);
+        }
+    }
+}
+
+bool WindowManager::isTriggerReceiver(XPLMWindowID wnd) {
+    return triggerReceivers.find(wnd) != triggerReceivers.end();
 }
 
 void WindowManager::onVRStateChanged(bool inVr) {
     isInVR = inVr;
     if (isInVR) {
-        vrCapturer.setEnabled(triggerEnabled);
+        if (!triggerReceivers.empty()) {
+            vrCapturer.setEnabled(true);
+        }
     } else {
         closeVRWindows();
         vrCapturer.setEnabled(false);
@@ -124,6 +138,7 @@ void WindowManager::checkForClose() {
 }
 
 void WindowManager::closeVRWindows() {
+    triggerReceivers.clear();
     for (auto it = movedWindows.begin(); it != movedWindows.end(); ) {
         if (it->second->isInVR()) {
             it = movedWindows.erase(it);

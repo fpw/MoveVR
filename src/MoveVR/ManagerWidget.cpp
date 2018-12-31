@@ -53,13 +53,6 @@ void ManagerWidget::buildInterface() {
         buildSystemWindows();
         ImGui::TreePop();
     }
-
-    ImGui::Separator();
-    ImGui::TextUnformatted("Enable the following option if the aircraft has touch displays that do react to VR controllers.");
-    bool triggerEnabled = manager->isPanelCaptureEnabled();
-    if (ImGui::Checkbox("Forward VR triggers to panels", &triggerEnabled)) {
-        manager->setEnablePanelCapture(triggerEnabled);
-    }
 }
 
 void ManagerWidget::buildXPlaneWindows() {
@@ -95,6 +88,15 @@ void ManagerWidget::buildXPlaneWindows() {
 
 void ManagerWidget::buildXPlaneWindow(XPLMWindowID wnd) {
     bool isInVR = XPLMWindowIsInVR(wnd);
+
+    bool isReceiver = manager->isTriggerReceiver(wnd);
+    if (ImGui::Checkbox("Receive VR panel clicks", &isReceiver)) {
+        if (isReceiver) {
+            manager->addTriggerReceiver(wnd);
+        } else {
+            manager->removeTriggerReceiver(wnd);
+        }
+    }
 
     if (!isInVR) {
         if (ImGui::Button("Move to VR")) {

@@ -28,6 +28,7 @@ public:
     XPlaneWindowList();
     std::vector<XPLMWindowID> findWindows();
     XPLMPluginID getPluginFromWindow(XPLMWindowID wnd);
+    void sendCursorMove(XPLMWindowID wnd, int x, int y);
     void sendLeftClick(XPLMWindowID wnd, XPLMMouseStatus status, int x, int y);
     ~XPlaneWindowList();
 private:
@@ -37,7 +38,8 @@ private:
     size_t offsetPrev = 0;
     size_t offsetNext = 0;
     size_t offsetClick = 0;
-    size_t offsetPluginId = 112;
+    size_t offsetCursor = 0;
+    size_t offsetPluginId = 0;
 
     void createNodes();
     void findOffsets();

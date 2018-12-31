@@ -100,11 +100,14 @@ void XPlaneWindowList::findOffsets() {
     offsetClick = findPointerOffset(node, OPAQUE_SIZE, (void *) onLeftClick);
     logger::verbose("offsetClick: %d", offsetClick);
 
-    XPLMPluginID ourId = XPLMGetMyID();
-    if (ourId > 1) {
-        offsetPluginId = findIntOffset(node, OPAQUE_SIZE, ourId);
+    offsetCursor = findPointerOffset(node, OPAQUE_SIZE, (void *) onCursor);
+    logger::verbose("offsetCursor: %d", offsetCursor);
+
+    if (offsetNext == 16 && offsetPrev == 0 && offsetClick == 80 && offsetCursor == 96) {
+        offsetPluginId = 112; // XPLM301
     } else {
-        logger::warn("Using default value for offsetPluginId (dangerous - install more plugins!)");
+        logger::warn("Guessing value for offsetPluginId (dangerous!)");
+        offsetPluginId = findIntOffset(node, OPAQUE_SIZE, XPLMGetMyID());
     }
     logger::verbose("offsetPluginId: %d", offsetPluginId);
 
@@ -160,8 +163,6 @@ std::vector<XPLMWindowID> XPlaneWindowList::findWindows() {
     return res;
 }
 
-XPLMCreateWindow_t globalParams;
-
 void XPlaneWindowList::sendLeftClick(XPLMWindowID wnd, XPLMMouseStatus status, int x, int y) {
     if (!XPLMGetWindowIsVisible(wnd)) {
         return;
@@ -173,9 +174,22 @@ void XPlaneWindowList::sendLeftClick(XPLMWindowID wnd, XPLMMouseStatus status, i
 
     if (handler) {
         auto ref = XPLMGetWindowRefCon(wnd);
-        // the ABI is not compatible if the handler is not inside the struct due to some calling convention optimization
-        globalParams.handleMouseClickFunc = handler;
-        globalParams.handleMouseClickFunc(wnd, status, x, y, ref);
+        handler(wnd, x, y, status, ref);
+    }
+}
+
+void XPlaneWindowList::sendCursorMove(XPLMWindowID wnd, int x, int y) {
+    if (!XPLMGetWindowIsVisible(wnd)) {
+        return;
+    }
+
+    uint8_t *ptr = (uint8_t *) wnd;
+    uint8_t *cursor = ptr + offsetCursor;
+    XPLMHandleCursor_f handler = *((XPLMHandleCursor_f *) cursor);
+
+    if (handler) {
+        auto ref = XPLMGetWindowRefCon(wnd);
+        handler(wnd, x, y, ref);
     }
 }
 

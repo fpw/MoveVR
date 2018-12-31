@@ -20,6 +20,7 @@
 #include "Window.h"
 #include "src/Logger.h"
 
+// these don't exist in Windows 7, so do not import them by IAT
 using GetDpiForWindow_t = UINT WINAPI (*)(HWND);
 using GetDpiForSystem_t = UINT WINAPI (*)();
 auto u32lib = LoadLibraryA("user32");
