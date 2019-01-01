@@ -98,6 +98,12 @@ void ManagerWidget::buildXPlaneWindow(XPLMWindowID wnd) {
         }
     }
 
+    if (ImGui::Button("Enable VR for legacy windows")) {
+        manager->getXPlaneWindows()->injectFunction(wnd, [] {
+            XPLMEnableFeature("XPLM_USE_NATIVE_WIDGET_WINDOWS", 1);
+        });
+    }
+
     if (!isInVR) {
         if (ImGui::Button("Move to VR")) {
             XPLMSetWindowPositioningMode(wnd, xplm_WindowVR, -1);

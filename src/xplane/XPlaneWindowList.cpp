@@ -37,8 +37,15 @@
  */
 
 namespace {
+    XPlaneWindowList *instance{};
+
     // We won't actually use these callbacks - they are used as unique IDs to identify the offsets in the opaque handle
-    void onDraw(XPLMWindowID, void *) { }
+    void onDraw(XPLMWindowID wnd, void *) {
+        if (instance) {
+            instance->onInjectedCall(wnd);
+        }
+    }
+
     int onLeftClick(XPLMWindowID, int, int, XPLMMouseStatus, void *) { return 0; }
     void onKey(XPLMWindowID, char, XPLMKeyFlags, char, void *, int) { }
     XPLMCursorStatus onCursor(XPLMWindowID, int, int, void *) { return xplm_CursorDefault; }
@@ -97,6 +104,9 @@ void XPlaneWindowList::findOffsets() {
     logger::verbose("offsetPrev: %d", offsetPrev);
 
     // identify callback pointers
+    offsetDraw = findPointerOffset(node, OPAQUE_SIZE, (void *) onDraw);
+    logger::verbose("offsetDraw: %d", offsetDraw);
+
     offsetClick = findPointerOffset(node, OPAQUE_SIZE, (void *) onLeftClick);
     logger::verbose("offsetClick: %d", offsetClick);
 
@@ -191,6 +201,46 @@ void XPlaneWindowList::sendCursorMove(XPLMWindowID wnd, int x, int y) {
         auto ref = XPLMGetWindowRefCon(wnd);
         handler(wnd, x, y, ref);
     }
+}
+
+void XPlaneWindowList::injectFunction(XPLMWindowID wnd, InjectedFunction function) {
+    instance = this;
+
+    uint8_t *ptr = (uint8_t *) wnd;
+    uint8_t *draw = ptr + offsetDraw;
+    XPLMDrawWindow_f originalHandler = *((XPLMDrawWindow_f *) draw);
+
+    // check if already injected
+    if (originalHandler == onDraw) {
+        return;
+    }
+
+    // register injected function and remember its original one
+    auto pair = std::make_pair(function, originalHandler);
+    injectedFunctions.insert(std::make_pair(wnd, pair));
+
+    // overwrite window's draw handler with our injection handler
+    *((XPLMDrawWindow_f *) draw) = onDraw;
+
+    logger::verbose("Injected call from plugin %d", XPLMGetMyID());
+}
+
+void XPlaneWindowList::onInjectedCall(XPLMWindowID wnd) {
+    logger::verbose("Received injected call in plugin %d", XPLMGetMyID());
+
+    auto it = injectedFunctions.find(wnd);
+
+    if (it == injectedFunctions.end()) {
+        return;
+    }
+
+    // call the injected function
+    it->second.first();
+
+    // restore original handler
+    uint8_t *ptr = (uint8_t *) wnd;
+    uint8_t *draw = ptr + offsetDraw;
+    *((XPLMDrawWindow_f *) draw) = it->second.second;
 }
 
 size_t XPlaneWindowList::findPointerOffset(void *base, size_t size, void *ptr) {
