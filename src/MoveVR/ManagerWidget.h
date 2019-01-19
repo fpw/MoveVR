@@ -23,7 +23,7 @@
 #include <map>
 #include <memory>
 #include "WindowManager.h"
-#include "src/imgui/ImgWindow.h"
+#include "ImgWindow.h"
 
 class ManagerWidget: public ImgWindow {
 public:

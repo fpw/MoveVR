@@ -16,22 +16,22 @@
  *   along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 #include <XPLM/XPLMDisplay.h>
+#include <imgui.h>
 #include "src/Logger.h"
 #include "ManagerWidget.h"
-#include "src/imgui/imgui.h"
 
 ManagerWidget::ManagerWidget(std::shared_ptr<WindowManager> mgr, int left, int top, int right, int bot):
     ImgWindow(left, top, right, bot),
     manager(mgr)
 {
-    SetWindowTitle("MoveVR " MOVEVR_VERSION_STR " by Folke Will");
+    SetWindowTitle("MoveVR " MOVEVR_VERSION " by Folke Will");
     SetVisible(true);
 }
 
 void ManagerWidget::buildInterface() {
     if (ImGui::TreeNode("Usage & About")) {
         const char *text =
-                "MoveVR " MOVEVR_VERSION_STR ", copyright 2018 by Folke Will <folko@solhost.org>\n"
+                "MoveVR " MOVEVR_VERSION ", copyright 2018 by Folke Will <folko@solhost.org>\n"
                 "Uses the X-Plane imgui integration library, copyright 2018 by Christopher Collins\n"
                 "\n"
                 "Make sure your original windows are about the same size as you need them in VR.\n"

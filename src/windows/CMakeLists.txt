@@ -1,1 +1,3 @@
-add_library(movevr_windows Window.cpp)
+target_sources(movevr_plugin PRIVATE
+    ${CMAKE_CURRENT_LIST_DIR}/Window.cpp
+)

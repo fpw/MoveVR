@@ -13,8 +13,10 @@
 
 #pragma once
 
+#include "src/Logger.h"
+
 //---- Define assertion handler. Defaults to calling assert().
-//#define IM_ASSERT(_EXPR)  MyAssert(_EXPR)
+#define IM_ASSERT(_EXPR) do { if (!(_EXPR)) { logger::error("ImGui error: %s", #_EXPR); } } while (0)
 //#define IM_ASSERT(_EXPR)  ((void)(_EXPR))     // Disable asserts
 
 //---- Define attributes of all API symbols declarations, e.g. for DLL under Windows.

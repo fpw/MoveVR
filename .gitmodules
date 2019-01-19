@@ -1,0 +1,6 @@
+[submodule "lib/imgui"]
+	path = lib/imgui
+	url = https://github.com/ocornut/imgui
+[submodule "lib/XSDK"]
+	path = lib/XSDK
+	url = https://github.com/fpw/XSDK

@@ -1,27 +1,35 @@
 set(CMAKE_CXX_STANDARD 14)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror -fPIC")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror")
 
-add_definitions(-DIBM=1 -DXPLM301=1 -DXPLM300=1 -DXPLM210=1 -DXPLM200=1)
+add_definitions(-DXPLM301 -DXPLM300 -DXPLM210 -DXPLM200)
+add_definitions(-DMOVEVR_VERSION="${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.${PROJECT_VERSION_PATCH}")
 
-add_subdirectory(imgui)
-add_subdirectory(windows)
-add_subdirectory(xplane)
-add_subdirectory(MoveVR)
+include_directories("${PROJECT_SOURCE_DIR}")
+include_directories("lib/XSDK/CHeaders")
+include_directories("lib/imgui")
 
 # X-Plane plugin
-add_library(movevr_plugin SHARED Plugin.cpp Logger.cpp)
-target_link_libraries(movevr_plugin
-    -static
-    -static-libgcc
-    -static-libstdc++
-    movevr_main
-    movevr_windows
-    movevr_imgui
-    movevr_xplane
-    gdiplus
-    XPLM_64
-    OpenGL32
+add_library(movevr_plugin SHARED
+    ${CMAKE_CURRENT_LIST_DIR}/Plugin.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/Logger.cpp
 )
+
+include("${CMAKE_CURRENT_LIST_DIR}/MoveVR/CMakeLists.txt")
+include("${CMAKE_CURRENT_LIST_DIR}/windows/CMakeLists.txt")
+include("${CMAKE_CURRENT_LIST_DIR}/xplane/CMakeLists.txt")
+
+if(WIN32)
+    add_definitions(-DIBM)
+    target_link_libraries(movevr_plugin
+        -static
+        -static-libgcc
+        -static-libstdc++
+        movevr_imgui
+        "${PROJECT_SOURCE_DIR}/lib/XSDK/Libraries/Win/XPLM_64.lib"
+        gdiplus
+        OpenGL32
+    )
+endif(WIN32)
 
 set_target_properties(movevr_plugin PROPERTIES PREFIX "")
 set_target_properties(movevr_plugin PROPERTIES OUTPUT_NAME "MoveVR")

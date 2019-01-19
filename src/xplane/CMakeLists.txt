@@ -1,4 +1,4 @@
-add_library(movevr_xplane
-    XPlaneWindowList.cpp
-    VRTriggerCapturer.cpp
+target_sources(movevr_plugin PRIVATE
+    ${CMAKE_CURRENT_LIST_DIR}/XPlaneWindowList.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/VRTriggerCapturer.cpp
 )

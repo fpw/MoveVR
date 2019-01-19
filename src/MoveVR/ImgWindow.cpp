@@ -493,4 +493,3 @@ ImgWindow::SafeDelete()
 {
 	mSelfDestruct = true;
 }
-
