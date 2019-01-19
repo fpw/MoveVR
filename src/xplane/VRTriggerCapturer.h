@@ -20,8 +20,7 @@
 
 #include <XPLM/XPLMDataAccess.h>
 #include <XPLM/XPLMDisplay.h>
-#include <XPLM/XPLMProcessing.h>
-#include <vector>
+#include <XPLM/XPLMUtilities.h>
 #include <functional>
 
 class VRTriggerCapturer {
@@ -35,17 +34,14 @@ public:
     void setTriggerCallback(TriggerCallback cb);
     ~VRTriggerCapturer();
 private:
-    XPLMFlightLoopID flightLoop{};
+    XPLMDataRef refXpix{}, refYpix{};
+    XPLMCommandRef triggerRef{};
+
     bool isEnabled = false;
     TriggerCallback triggerCallback{};
-    XPLMDataRef refXpix{}, refYpix{}, refButtonValues{};
-    XPLMWindowID captureWindow{};
-    std::vector<int> vrTriggerIndices;
-    bool triggerDown = false;
 
-    bool findVRTriggers();
-    void checkVRClicks();
-    void onTrigger(XPLMMouseStatus status);
+    static int onRawTrigger(XPLMCommandRef cmd, XPLMCommandPhase phase, void *ref);
+    void onTrigger(XPLMCommandPhase status);
 };
 
 #endif /* SRC_XPLANE_VRTRIGGERCAPTURER_H_ */
