@@ -28,7 +28,6 @@
 class ManagerWidget: public ImgWindow {
 public:
     struct WindowConfig {
-        int quality = 0;
         int delay = 0;
         bool dragging = false;
         float brightness = 1.0f;

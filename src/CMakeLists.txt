@@ -1,7 +1,7 @@
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror")
 
-add_definitions(-DXPLM301 -DXPLM300 -DXPLM210 -DXPLM200)
+add_definitions(-DXPLM301 -DXPLM300 -DXPLM210 -DXPLM200 -DGLEW_STATIC)
 add_definitions(-DMOVEVR_VERSION="${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.${PROJECT_VERSION_PATCH}")
 
 include_directories("${PROJECT_SOURCE_DIR}")
@@ -27,6 +27,7 @@ if(WIN32)
         movevr_imgui
         "${PROJECT_SOURCE_DIR}/lib/XSDK/Libraries/Win/XPLM_64.lib"
         gdiplus
+        glew32
         OpenGL32
     )
 endif(WIN32)

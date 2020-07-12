@@ -39,7 +39,7 @@ void ManagerWidget::buildInterface() {
                 "Only use a higher quality setting if you really need it as it is rather expensive (FPS).\n"
                 "Only enable mouse dragging if you are using an application that needs dragging or panning.\n"
                 "";
-        ImGui::Text(text);
+        ImGui::Text("%s", text);
 
         ImGui::TreePop();
     }
@@ -125,7 +125,6 @@ void ManagerWidget::buildSystemWindows() {
             if (moved) {
                 config.brightness = moved->getBrightness();
                 config.delay = moved->getDelay();
-                config.quality = moved->getQuality();
                 config.dragging = moved->getDoDrag();
             }
 
@@ -141,26 +140,6 @@ void ManagerWidget::buildSystemWindows() {
                 }
             }
 
-            if (ImGui::RadioButton("Fast Quality", &config.quality, 0)) {
-                if (moved) {
-                    moved->setQuality(config.quality);
-                }
-            }
-            ImGui::SameLine();
-
-            if (ImGui::RadioButton("Medium Quality", &config.quality, 1)) {
-                if (moved) {
-                    moved->setQuality(config.quality);
-                }
-            }
-            ImGui::SameLine();
-
-            if (ImGui::RadioButton("Best Quality", &config.quality, 2)) {
-                if (moved) {
-                    moved->setQuality(config.quality);
-                }
-            }
-
             if (ImGui::Checkbox("Support Mouse Dragging", &config.dragging)) {
                 if (moved) {
                     moved->setDoDrag(config.dragging);
@@ -171,7 +150,6 @@ void ManagerWidget::buildSystemWindows() {
                 if (ImGui::Button("Move to VR")) {
                     moved = manager->moveToVR(wnd);
                     moved->setDelay(config.delay);
-                    moved->setQuality(config.quality);
                     moved->setBrightness(config.brightness);
                     moved->setDoDrag(config.dragging);
                 }

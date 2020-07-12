@@ -16,6 +16,7 @@
  *   along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 #include <XPLM/XPLMPlugin.h>
+#include <GL/glew.h>
 #include "MoveVR.h"
 #include "src/Logger.h"
 
@@ -25,6 +26,7 @@ MoveVR::MoveVR():
 }
 
 void MoveVR::start() {
+    glewInit();
     createMenu("MoveVR");
     command = createCommand();
 

@@ -36,10 +36,6 @@ MovedWindow::MovedWindow(std::shared_ptr<Window> window):
     captureThread = std::make_unique<std::thread>(&MovedWindow::captureLoop, this);
 }
 
-void MovedWindow::setQuality(int q) {
-    quality = q;
-}
-
 void MovedWindow::setDelay(int dly) {
     drawDelay = dly;
 }
@@ -54,10 +50,6 @@ void MovedWindow::setDoDrag(bool drag) {
 
 bool MovedWindow::getDoDrag() {
     return doDrag;
-}
-
-int MovedWindow::getQuality() {
-    return quality;
 }
 
 int MovedWindow::getDelay() {
@@ -131,27 +123,33 @@ void MovedWindow::createWindow(const std::string &title) {
     }
 
     XPLMSetWindowTitle(window, title.c_str());
+
+    XPLMBindTexture2d(textureId, 0);
+            glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
+    pbo.init(requestedWidth, requestedHeight, (3 * requestedWidth + (4 - 1)) & ~(4 - 1));
 }
 
 void MovedWindow::captureLoop() {
     while (keepRunning) {
-        std::unique_lock<std::mutex> lock(conditionMutex);
-        drawCondition.wait(lock, [this] () { return doCapture || !keepRunning; });
+        auto ptr = pbo.getBackBuffer();
+        if (!ptr) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(1 + drawDelay * 2));
+            continue;
+        }
 
-        if (!keepRunning) {
+        try {
+            wnd->updateScreenshot(pbo.getBackbufferWidth(), pbo.getBackbufferHeight(), 2);
+        } catch (const std::exception &e) {
+            pbo.finishBackBuffer();
+            logger::info("No screenshot: %s", e.what());
             break;
         }
 
-        if (doCapture) {
-            try {
-                wnd->updateScreenshot(requestedWidth, requestedHeight, quality);
-            } catch (const std::exception &e) {
-                logger::info("No screenshot: %s", e.what());
-                break;
-            }
-            doCapture = false;
-            needRedraw = true;
-        }
+        auto &screenshot = wnd->getLastScreenshot();
+        memcpy(ptr, screenshot.pixels.data(), screenshot.pixels.size());
+        pbo.finishBackBuffer();
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(1 + drawDelay * 2));
     }
 }
 
@@ -183,30 +181,13 @@ void MovedWindow::onDraw() {
         } else {
             XPLMSetWindowGeometry(window, left, top, right, bottom);
         }
+        pbo.setSize(requestedWidth, requestedHeight, (3 * requestedWidth + (4 - 1)) & ~(4 - 1));
     }
 
     XPLMBindTexture2d(textureId, 0);
+    XPLMSetGraphicsState(0, 1, 0, 0, 1, 1, 0);
 
-    std::unique_lock<std::mutex> lock(conditionMutex, std::defer_lock);
-    if (lock.try_lock()) {
-        if (needRedraw && delayCount >= drawDelay) {
-            auto &screenshot = wnd->getLastScreenshot();
-
-            glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
-            glTexImage2D(GL_TEXTURE_2D, 0,
-                    GL_RGBA, screenshot.width, screenshot.height, 0,
-                    GL_BGR, GL_UNSIGNED_BYTE, screenshot.pixels.data());
-            needRedraw = false;
-            doCapture = true;
-            delayCount = 0;
-        } else {
-            delayCount++;
-        }
-        lock.unlock();
-    }
-    drawCondition.notify_one();
-
-    XPLMSetGraphicsState(0, 1, 0, 0, 0, 1, 0);
+    pbo.drawFrontBuffer();
 
     glColor3f(brightness, brightness, brightness);
 
@@ -331,11 +312,7 @@ bool MovedWindow::isInVR() const {
 }
 
 MovedWindow::~MovedWindow() {
-    {
-        std::lock_guard<std::mutex> lock(conditionMutex);
-        keepRunning = false;
-    }
-    drawCondition.notify_one();
+    keepRunning = false;
 
     if (captureThread) {
         captureThread->join();

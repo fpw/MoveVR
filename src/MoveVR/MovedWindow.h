@@ -26,6 +26,7 @@
 #include <memory>
 #include <thread>
 #include <atomic>
+#include "AsyncPBO.h"
 #include "DataRef.h"
 #include "src/windows/Window.h"
 
@@ -33,12 +34,10 @@ class MovedWindow {
 public:
     MovedWindow(std::shared_ptr<Window> window);
 
-    void setQuality(int q);
     void setDelay(int dly);
     void setBrightness(float bright);
     void setDoDrag(bool drag);
 
-    int getQuality();
     int getDelay();
     float getBrightness();
     bool getDoDrag();
@@ -53,17 +52,14 @@ private:
     DataRef<bool> isVrEnabled;
     XPLMWindowID window = nullptr;
     int textureId = -1;
+    AsyncPBO pbo;
     std::atomic_int requestedWidth {0}, requestedHeight {0};
-    bool doCapture = false;
-    bool needRedraw = false;
+    std::atomic_bool doCapture;
+    std::atomic_bool needRedraw;
     std::atomic_bool keepRunning { false };
     std::unique_ptr<std::thread> captureThread;
 
-    std::mutex conditionMutex;
-    std::condition_variable drawCondition;
-
     std::atomic_bool doDrag { false };
-    std::atomic_int quality { 0 };
     std::atomic_int drawDelay { 0 };
     std::atomic<float> brightness { 1.0f };
     int delayCount = 0;
