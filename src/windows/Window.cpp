@@ -282,7 +282,8 @@ std::vector<std::shared_ptr<Window>> findWindows() {
             GetWindowTextA(wnd, title, sizeof(title));
             bool isEFASS = (strstr(title, "EFASS") == title);
             bool isReflector = (strstr(title, "Reflector") == title);
-            if (!isEFASS && !isReflector) {
+            bool isAirDroid = (strstr(title, "AirDroid Cast v") == title);
+            if (!isEFASS && !isReflector && !isAirDroid) {
                 return true;
             }
         }
